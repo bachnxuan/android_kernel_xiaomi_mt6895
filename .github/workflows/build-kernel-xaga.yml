@@ -1,0 +1,78 @@
+name: Build GKI - Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4.2.2
+        with:
+          submodules: "true"
+          fetch-depth: 1
+
+      - name: Install dependencies
+        run: |
+          sudo apt update -y
+          sudo apt install bc binutils-dev bison build-essential ccache curl flex git libelf-dev lld make python3-dev zlib1g-dev cpio python-is-python3 tar perl wget lz4 zstd -y
+          git clone https://github.com/bachnxuan/AnyKernel3.git AnyKernel3
+          cd AnyKernel3 && rm -rf .git .github && cd ..
+          git submodule update --init --recursive
+          cd KernelSU-Next
+          git fetch --unshallow origin next-susfs:next-susfs
+          git branch -r
+          git checkout next-susfs
+          git pull origin next-susfs
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          max-size: 3G
+
+      - name: Setup clang
+        working-directory: ./..
+        run: |
+          git clone --depth 1 https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r416183b clang-tc
+      - name: Configure Kernel
+        run: |
+          # Add SUSFS configuration settings
+          echo "CONFIG_KSU=y" >> ./arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS=y" >> ./arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y" >> ./arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y" >> ./arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y" >> ./arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y" >> ./arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y" >> ./arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y" >> ./arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./arch/arm64/configs/gki_defconfig
+          # Add additional tmpfs config setting
+          echo "CONFIG_TMPFS_XATTR=y" >> ./arch/arm64/configs/gki_defconfig
+      - name: Build
+        run: |
+          bash build.sh
+
+      - name: Making ak3 zip
+        run: |
+          mv ./out/arch/arm64/boot/Image.gz $GITHUB_WORKSPACE
+          cd AnyKernel3
+          ZIP_NAME="KERNEL-AnyKernel3.zip"
+          echo "Creating zip file: $ZIP_NAME..."
+          mv ../Image.gz ./Image.gz
+          zip -r "../$ZIP_NAME" ./*
+          rm ./Image.gz
+
+      - name: Upload Kernel Image
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          path: |
+            ./KERNEL-AnyKernel3.zip
