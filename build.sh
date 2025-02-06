@@ -23,7 +23,7 @@ DATE_START=$(date +"%s")
 
 make $THREAD CC="ccache clang" CXX="ccache clang++" $LLVM_CONFIG $DEFCONFIG O=out
 make $THREAD CC="ccache clang" CXX="ccache clang++" $LLVM_CONFIG \
-    CONFIG_LOCALVERSION_AUTO=n LOCALVERSION=-Android12-9-v$(date +%Y%m%d) \
+    CONFIG_LOCALVERSION_AUTO=n LOCALVERSION=-android12-$(date +%Y%m%d) \
     LTO=thin O=out 2>&1 | tee kernel.log
 
 DATE_END=$(date +"%s")
