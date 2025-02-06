@@ -11,13 +11,17 @@ export PATH=${CLANG_PATH}:${PATH}
 export CLANG_TRIPLE="aarch64-linux-gnu-"
 export CROSS_COMPILE="aarch64-linux-gnu-"
 
+# ccache configuration
+mkdir -p $(pwd)/.ccache 2>/dev/null
+export CCACHE_DIR=$(pwd)/.ccache
+export CCACHE=1
+
 # Config
 THREAD="-j$(nproc --all)"
 DEFCONFIG="gki_defconfig"
 export ARCH=arm64
 export SUBARCH=$ARCH
 export KBUILD_BUILD_USER=bachnxuan
-export USE_CCACHE=1
 LLVM_CONFIG="LLVM=1 LLVM_IAS=1 AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip"
 DATE_START=$(date +"%s")
 
