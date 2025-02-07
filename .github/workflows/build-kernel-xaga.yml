@@ -96,7 +96,8 @@ jobs:
       - name: Unpack artifact
         working-directory: ./release-artifact
         run: |
-          unzip -o AnyKernel3.zip -d .
+          ls -la
+          # unzip -o AnyKernel3.zip -d .
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
