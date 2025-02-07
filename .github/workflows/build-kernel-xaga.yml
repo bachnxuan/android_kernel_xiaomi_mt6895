@@ -6,19 +6,22 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    outputs:
+      TIME: ${{ steps.set_time.outputs.TIME }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4.2.2
         with:
           submodules: "true"
           fetch-depth: 1
-      - name: Install dependencies
+      - name: Setup build environment
         run: |
+          # Install require dependencies
           sudo apt update -y
           sudo apt install bc binutils-dev bison build-essential ccache curl flex git libelf-dev lld make python3-dev zlib1g-dev cpio python-is-python3 tar perl wget lz4 zstd -y
           git clone https://github.com/bachnxuan/AnyKernel3.git AnyKernel3
           cd AnyKernel3 && rm -rf .git .github && cd ..
+          # Auto update KernelSU-Next submodule
           git submodule update --init --recursive
           cd KernelSU-Next
           git fetch --unshallow origin next-susfs:next-susfs
@@ -62,18 +65,50 @@ jobs:
           echo "CONFIG_TMPFS_XATTR=y" >> ./arch/arm64/configs/gki_defconfig
       - name: Build
         run: |
-          bash build.sh
+          bash build.sh 
+      - name: Get current time
+        id: set_time
+        run: echo "TIME=$(date +'%Y%m%d')" >> $GITHUB_ENV && echo "TIME=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
       - name: Making ak3 zip
         run: |
           mv ./out/arch/arm64/boot/Image.gz $GITHUB_WORKSPACE
           cd AnyKernel3
-          ZIP_NAME="KERNEL-AnyKernel3.zip"
+          ZIP_NAME="5.10.233-xaga-${{ env.TIME }}-AnyKernel3.zip"
           echo "Creating zip file: $ZIP_NAME..."
           mv ../Image.gz ./Image.gz
           zip -r "../$ZIP_NAME" ./*
           rm ./Image.gz
-      - name: Upload Kernel Image
+      - name: Upload Kernel Image Artifact
         uses: actions/upload-artifact@v4.6.0
         with:
-          path: |
-            ./KERNEL-AnyKernel3.zip
+          name: AnyKernel3
+          path: ./5.10.233-xaga-${{ env.TIME }}-AnyKernel3.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Kernel Image Artifact
+        uses: actions/download-artifact@v4.6.0
+        with:
+          name: AnyKernel3
+          path: ./release-artifact
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: "${{ env.TIME }}"
+          release_name: "GKI Release: ${{ env.TIME }}"
+          draft: false
+          prerelease: true
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: "./release-artifact/5.10.233-xaga-${{ env.TIME }}-AnyKernel3.zip"
+          asset_name: "5.10.233-xaga-${{ env.TIME }}-AnyKernel3.zip"
+          asset_content_type: application/zip
