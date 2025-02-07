@@ -18,7 +18,7 @@ jobs:
         run: |
           # Install require dependencies
           sudo apt update -y
-          sudo apt install bc binutils-dev bison build-essential ccache curl flex git libelf-dev lld make python3-dev zlib1g-dev cpio python-is-python3 tar perl wget lz4 zstd -y
+          sudo apt install bc binutils-dev bison build-essential ccache curl flex git libelf-dev lld make python3-dev zlib1g-dev cpio python-is-python3 tar perl wget lz4 unzip -y
           git clone https://github.com/bachnxuan/AnyKernel3.git AnyKernel3
           cd AnyKernel3 && rm -rf .git .github && cd ..
           # Auto update KernelSU-Next submodule
@@ -89,10 +89,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Kernel Image Artifact
-        uses: actions/download-artifact@v4.6.0
+        uses: actions/download-artifact@v4.1.8
         with:
           name: AnyKernel3
           path: ./release-artifact
+      - name: Unpack artifact
+        working-directory: ./release-artifact
+        run: |
+          unzip -o AnyKernel3.zip -d .
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
