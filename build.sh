@@ -16,8 +16,8 @@ if [ -z "$GITHUB_ACTIONS" ]; then
     echo "Building in local machine!"
     mkdir -p "$(pwd)/.ccache" 2>/dev/null
     export CCACHE_DIR="$(pwd)/.ccache"
-    export CCACHE=1
 fi
+export CCACHE=1
 
 # Config
 THREAD="-j$(nproc --all)"
