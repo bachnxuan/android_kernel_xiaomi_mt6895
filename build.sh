@@ -11,10 +11,12 @@ export PATH=${CLANG_PATH}:${PATH}
 export CLANG_TRIPLE="aarch64-linux-gnu-"
 export CROSS_COMPILE="aarch64-linux-gnu-"
 
-# ccache configuration
-mkdir -p $(pwd)/.ccache 2>/dev/null
-export CCACHE_DIR=$(pwd)/.ccache
-export CCACHE=1
+# Manual ccache configuration if not running in github action
+if [ -z "$GITHUB_ACTIONS" ]; then
+    mkdir -p "$(pwd)/.ccache" 2>/dev/null
+    export CCACHE_DIR="$(pwd)/.ccache"
+    export CCACHE=1
+fi
 
 # Config
 THREAD="-j$(nproc --all)"
