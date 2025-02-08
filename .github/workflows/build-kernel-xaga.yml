@@ -26,6 +26,8 @@ jobs:
           git branch -r
           git checkout next-susfs
           git pull origin next-susfs
+          # Get current time
+          echo "TIME=$(date +'%Y%m%d')" >> $GITHUB_ENV
       - name: Free disk space
         run: |
           sudo apt-get update -qq
@@ -66,7 +68,6 @@ jobs:
           bash build.sh
       - name: Making ak3 zip
         run: |
-          echo "TIME=$(date +'%Y%m%d')" >> $GITHUB_ENV
           mv ./out/arch/arm64/boot/Image.gz $GITHUB_WORKSPACE
           cd AnyKernel3
           ZIP_NAME="5.10.233-xaga-${{ env.TIME }}-AnyKernel3.zip"
