@@ -6,8 +6,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    outputs:
-      TIME: ${{ steps.set_time.outputs.TIME }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4.2.2
@@ -65,12 +63,10 @@ jobs:
           echo "CONFIG_TMPFS_XATTR=y" >> ./arch/arm64/configs/gki_defconfig
       - name: Build
         run: |
-          bash build.sh 
-      - name: Get current time
-        id: set_time
-        run: echo "TIME=$(date +'%Y%m%d')" >> $GITHUB_ENV && echo "TIME=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+          bash build.sh
       - name: Making ak3 zip
         run: |
+          echo "TIME=$(date +'%Y%m%d')" >> $GITHUB_ENV
           mv ./out/arch/arm64/boot/Image.gz $GITHUB_WORKSPACE
           cd AnyKernel3
           ZIP_NAME="5.10.233-xaga-${{ env.TIME }}-AnyKernel3.zip"
@@ -88,16 +84,14 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Setup Environment
+        run: |
+          echo "TIME=$(date +'%Y%m%d')" >> $GITHUB_ENV
       - name: Download Kernel Image Artifact
         uses: actions/download-artifact@v4.1.8
         with:
           name: AnyKernel3
           path: ./release-artifact
-      - name: Unpack artifact
-        working-directory: ./release-artifact
-        run: |
-          ls -la
-          # unzip -o AnyKernel3.zip -d .
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
