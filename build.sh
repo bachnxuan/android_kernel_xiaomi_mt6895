@@ -13,6 +13,7 @@ export CROSS_COMPILE="aarch64-linux-gnu-"
 
 # Manual ccache configuration if not running in github action
 if [ -z "$GITHUB_ACTIONS" ]; then
+    echo "Building in local machine!"
     mkdir -p "$(pwd)/.ccache" 2>/dev/null
     export CCACHE_DIR="$(pwd)/.ccache"
     export CCACHE=1
