@@ -99,7 +99,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: "${{ env.TIME }}"
-          release_name: "GKI Release: ${{ env.TIME }}"
+          release_name: "KernelSU With SUSFS: ${{ env.TIME }}"
           draft: false
           prerelease: true
       - name: Upload Release Asset
