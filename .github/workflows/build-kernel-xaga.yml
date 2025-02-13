@@ -77,7 +77,7 @@ jobs:
           # Add additional tmpfs config setting
           echo "CONFIG_TMPFS_XATTR=y" >> ./arch/arm64/configs/gki_defconfig
           # Remove check_defconfig
-          sed -i 's/check_defconfig//' ./common/build.config.gki
+          sed -i 's/check_defconfig//' ./build.config.gki
       - name: Build
         run: |
           bash build.sh
