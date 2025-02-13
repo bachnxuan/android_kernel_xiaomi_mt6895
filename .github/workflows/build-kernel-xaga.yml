@@ -37,10 +37,30 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           max-size: 3G
-      - name: Setup clang
+      - name: Clone prebuilts
         working-directory: ./..
         run: |
+          AOSP_MIRROR=https://android.googlesource.com
+          BRANCH=main-kernel-build-2024
+          git clone $AOSP_MIRROR/kernel/prebuilts/build-tools -b $BRANCH --depth 1 kernel-build-tools
+          git clone $AOSP_MIRROR/platform/system/tools/mkbootimg -b $BRANCH --depth 1 mkbootimg
+
+          echo "AVBTOOL=$GITHUB_WORKSPACE/kernel-build-tools/linux-x86/bin/avbtool" >> $GITHUB_ENV
+          echo "MKBOOTIMG=$GITHUB_WORKSPACE/mkbootimg/mkbootimg.py" >> $GITHUB_ENV
+          echo "UNPACK_BOOTIMG=$GITHUB_WORKSPACE/mkbootimg/unpack_bootimg.py" >> $GITHUB_ENV
           git clone --depth 1 https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r416183b clang-tc
+      - name: Set boot sign key
+        env:
+          BOOT_SIGN_KEY: ${{ secrets.BOOT_SIGN_KEY }}
+        working-directory: ./..
+        run: |
+          if [ ! -z "$BOOT_SIGN_KEY" ]; then
+            echo "$BOOT_SIGN_KEY" > ./kernel-build-tools/linux-x86/share/avb/testkey_rsa2048.pem
+            echo "BOOT_SIGN_KEY_PATH=$GITHUB_WORKSPACE/kernel-build-tools/linux-x86/share/avb/testkey_rsa2048.pem" >> $GITHUB_ENV
+          else
+            echo "BOOT_SIGN_KEY is not set. Exiting..."
+            exit 1
+          fi
       - name: Configure Kernel
         run: |
           # Add SUSFS configuration settings
@@ -75,11 +95,22 @@ jobs:
           mv ../Image.gz ./Image.gz
           zip -r "../$ZIP_NAME" ./*
           rm ./Image.gz
+      - name: Unpack boot.img and Build Kernels
+        run: |
+          mkdir bootimg && cd bootimg
+          
+          echo "Building boot.img"
+          $MKBOOTIMG --header_version 4 --kernel Image.gz --output boot-gz.img
+          $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-gz.img --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
+          cp ./boot-gz.img ../5.10.233-xaga-${{ env.TIME }}-boot.img
+          mv ./5.10.233-xaga-${{ env.TIME }}-boot.img ..
       - name: Upload Kernel Image Artifact
         uses: actions/upload-artifact@v4.6.0
         with:
-          name: AnyKernel3
-          path: ./5.10.233-xaga-${{ env.TIME }}-AnyKernel3.zip
+          name: kernel
+          path: |
+            ./5.10.233-xaga-${{ env.TIME }}-AnyKernel3.zip
+            ./5.10.233-xaga-${{ env.TIME }}-boot.img
 
   release:
     needs: build
@@ -88,27 +119,26 @@ jobs:
       - name: Setup Environment
         run: |
           echo "TIME=$(date +'%Y%m%d')" >> $GITHUB_ENV
+          mkdir -p ./release-artifact
       - name: Download Kernel Image Artifact
         uses: actions/download-artifact@v4.1.8
         with:
-          name: AnyKernel3
+          name: kernel
           path: ./release-artifact
-      - name: Create GitHub Release
+      - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2.2.1
         with:
           tag_name: "${{ env.TIME }}"
-          release_name: "KernelSU-Next With SUSFS Release: ${{ env.TIME }}"
+          name: "KernelSU-Next With SUSFS Release: ${{ env.TIME }}"
           draft: false
           prerelease: true
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Assets
+        uses: softprops/action-gh-release@v2.2.1
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: "./release-artifact/5.10.233-xaga-${{ env.TIME }}-AnyKernel3.zip"
-          asset_name: "5.10.233-xaga-${{ env.TIME }}-AnyKernel3.zip"
-          asset_content_type: application/zip
+          files: ./release-artifact/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
