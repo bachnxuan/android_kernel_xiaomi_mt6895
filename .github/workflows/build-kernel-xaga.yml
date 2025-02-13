@@ -52,9 +52,9 @@ jobs:
       - name: Set boot sign key
         env:
           BOOT_SIGN_KEY: ${{ secrets.BOOT_SIGN_KEY }}
-        working-directory: ./..
         run: |
           echo "$BOOT_SIGN_KEY" > ../kernel-build-tools/linux-x86/share/avb/testkey_rsa2048.pem
+          cat ../kernel-build-tools/linux-x86/share/avb/testkey_rsa2048.pem
           echo "BOOT_SIGN_KEY_PATH=../kernel-build-tools/linux-x86/share/avb/testkey_rsa2048.pem" >> $GITHUB_ENV
       - name: Configure Kernel
         run: |
