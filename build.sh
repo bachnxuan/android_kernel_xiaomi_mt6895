@@ -17,7 +17,7 @@ if [ -z "$GITHUB_ACTIONS" ]; then
     mkdir -p "$(pwd)/.ccache" 2>/dev/null
     export CCACHE_DIR="$(pwd)/.ccache"
 fi
-export CCACHE=1
+export USE_CCACHE=1
 
 # Config
 THREAD="-j$(nproc --all)"
