@@ -41,14 +41,7 @@ jobs:
         uses: pierotofy/set-swap-space@v1.0
         with:
           swap-size-gb: 10      
-      - name: Clone prebuilts
-        working-directory: ./..
-        run: |
-          AOSP_MIRROR=https://android.googlesource.com
-          BRANCH=main-kernel-build-2024
-          git clone $AOSP_MIRROR/kernel/prebuilts/build-tools -b $BRANCH --depth 1 kernel-build-tools
-          git clone $AOSP_MIRROR/platform/system/tools/mkbootimg -b $BRANCH --depth 1 mkbootimg
-      - name: Clone prebuilts
+      - name: Download toolchain
         working-directory: ./..
         run: |
           AOSP_MIRROR=https://android.googlesource.com
@@ -83,6 +76,8 @@ jobs:
           echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./arch/arm64/configs/gki_defconfig
           # Add additional tmpfs config setting
           echo "CONFIG_TMPFS_XATTR=y" >> ./arch/arm64/configs/gki_defconfig
+          # Remove check_defconfig
+          sed -i 's/check_defconfig//' ./common/build.config.gki
       - name: Build
         run: |
           bash build.sh
