@@ -36,7 +36,11 @@ jobs:
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          max-size: 3G
+          max-size: 5G
+      - name: Set Swap Space
+        uses: pierotofy/set-swap-space@v1.0
+        with:
+          swap-size-gb: 10      
       - name: Clone prebuilts
         working-directory: ./..
         run: |
@@ -44,17 +48,12 @@ jobs:
           BRANCH=main-kernel-build-2024
           git clone $AOSP_MIRROR/kernel/prebuilts/build-tools -b $BRANCH --depth 1 kernel-build-tools
           git clone $AOSP_MIRROR/platform/system/tools/mkbootimg -b $BRANCH --depth 1 mkbootimg
-
-          echo "AVBTOOL=../kernel-build-tools/linux-x86/bin/avbtool" >> $GITHUB_ENV
-          echo "MKBOOTIMG=../mkbootimg/mkbootimg.py" >> $GITHUB_ENV
-          echo "UNPACK_BOOTIMG=../mkbootimg/unpack_bootimg.py" >> $GITHUB_ENV
           git clone --depth 1 https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r416183b clang-tc
       - name: Set boot sign key
         env:
           BOOT_SIGN_KEY: ${{ secrets.BOOT_SIGN_KEY }}
         run: |
           echo "$BOOT_SIGN_KEY" > ../kernel-build-tools/linux-x86/share/avb/testkey_rsa2048.pem
-          cat ../kernel-build-tools/linux-x86/share/avb/testkey_rsa2048.pem
           echo "BOOT_SIGN_KEY_PATH=../kernel-build-tools/linux-x86/share/avb/testkey_rsa2048.pem" >> $GITHUB_ENV
       - name: Configure Kernel
         run: |
@@ -90,6 +89,10 @@ jobs:
           cp ../Image.gz ./Image.gz
           zip -r "../$ZIP_NAME" ./*
           rm ./Image.gz
+      - name: Initialize environment for building boot image
+        run: |
+          echo "AVBTOOL=../../kernel-build-tools/linux-x86/bin/avbtool" >> $GITHUB_ENV
+          echo "MKBOOTIMG=../../mkbootimg/mkbootimg.py" >> $GITHUB_ENV
       - name: Build boot image
         run: |
           mkdir bootimg && cd bootimg
