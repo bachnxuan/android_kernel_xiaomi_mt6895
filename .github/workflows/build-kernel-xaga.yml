@@ -128,10 +128,7 @@ jobs:
       - name: Setup Environment
         run: |
           echo "TIME=$(date +'%Y%m%d')" >> $GITHUB_ENV
-          echo "TAG_NAME=$(date +'%Y%m%d')" >> $GITHUB_ENV
           mkdir -p ./release-artifact
-      - name: Debug Environment Variables
-        run: echo "Generated Tag Name:${{ env.TAG_NAME }}"
       - name: Download Kernel Image Artifact
         uses: actions/download-artifact@v4.1.8
         with:
@@ -142,18 +139,12 @@ jobs:
         with:
           name: boot
           path: ./release-artifact
-      - name: Create Git Tag
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-          git tag ${{ env.TAG_NAME }}
-          git push origin ${{ env.TAG_NAME }}
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v2.2.1
         with:
-          tag_name: "${{ env.TAG_NAME }}"
-          name: "KernelSU-Next With SUSFS Release: ${{ env.TAG_NAME }}"
+          tag_name: "${{ env.TIME }}"
+          name: "KernelSU-Next With SUSFS Release: ${{ env.TIME }}"
           draft: false
           prerelease: true
         env:
