@@ -111,11 +111,14 @@ jobs:
       - name: Upload Kernel Image Artifact
         uses: actions/upload-artifact@v4.6.0
         with:
-          name: kernel
-          path: |
-            ./5.10.233-xaga-${{ env.TIME }}-AnyKernel3.zip
-            ./5.10.233-xaga-${{ env.TIME }}-boot.img
-
+          name: AnyKernel3
+          path: ./5.10.233-xaga-${{ env.TIME }}-AnyKernel3.zip
+      - name: Upload Kernel Image Artifact
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          name: boot
+          path: ./5.10.233-xaga-${{ env.TIME }}-boot.img
+          
   release:
     needs: build
     runs-on: ubuntu-latest
@@ -127,7 +130,9 @@ jobs:
       - name: Download Kernel Image Artifact
         uses: actions/download-artifact@v4.1.8
         with:
-          name: kernel
+          name: |
+            AnyKernel3
+            boot
           path: ./release-artifact
       - name: Create Release
         id: create_release
