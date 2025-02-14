@@ -2,11 +2,17 @@ name: Build GKI - Release
 
 on:
   workflow_dispatch:
+  push:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      TIME: ${{steps.set-time.outputs.TIME}}
     steps:
+      - name: Get current time
+        id: set-time
+        run: echo "TIME=$(date +'%Y%m%d')" >> $GITHUB_ENV && echo "TIME=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
       - name: Maximize build space
         uses: easimon/maximize-build-space@master
         with:
@@ -36,8 +42,6 @@ jobs:
           git branch -r
           git checkout next-susfs
           git pull origin next-susfs
-          # Get current time
-          echo "TIME=$(date +'%Y%m%d')" >> $GITHUB_ENV
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -124,10 +128,20 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
+    env:
+      TIME: ${{ needs.set-time.outputs.TIME }}
+      NEW_TAG: ${{steps.set-tag.outputs.NEW_TAG}}
     steps:
       - name: Setup Environment
+        id: set-tag
         run: |
-          echo "TIME=$(date +'%Y%m%d')" >> $GITHUB_ENV
+          LATEST_TAG=$(gh api repos/bachnxuan/android_kernel_xiaomi_mt6895/tags --jq '.[0].name')
+          if [ "$LATEST_TAG" == "$TIME" ]; then
+            LATEST_TAG="$TIME-r0"
+            echo "NEW_TAG=$(echo "$LATEST_TAG" | awk -F'-r' '{suffix=$2; if (!suffix) suffix=0; suffix++; printf "%s-r%d", $1, suffix}')" >> $GITHUB_ENV && echo "NEW_TAG=$(echo "$LATEST_TAG" | awk -F'-r' '{suffix=$2; if (!suffix) suffix=0; suffix++; printf "%s-r%d", $1, suffix}')" >> $GITHUB_OUTPUT
+          else: 
+            echo "NEW_TAG = $TIME" >> $GITHUB_ENV && echo "NEW_TAG = $TIME" >> $GITHUB_OUTPUT
+          fi
           mkdir -p ./release-artifact
       - name: Download Kernel Image Artifact
         uses: actions/download-artifact@v4.1.8
@@ -143,17 +157,53 @@ jobs:
         id: create_release
         uses: softprops/action-gh-release@v2.2.1
         with:
-          tag_name: "${{ env.TIME }}"
-          name: "KernelSU-Next With SUSFS Release: ${{ env.TIME }}"
+          tag_name: "${{ env.NEW_TAG }}"
+          name: "KernelSU-Next With SUSFS Release: ${{ env.NEW_TAG }}"
           draft: false
-          prerelease: true
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload Assets
         uses: softprops/action-gh-release@v2.2.1
         with:
-          tag_name: "${{ env.TIME }}"
+          tag_name: "${{ env.NEW_TAG }}"
           generate_release_notes: true
           files: ./release-artifact/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+  telegram_notification:
+    needs: release
+    runs-on: ubuntu-latest
+    env:
+      TIME: ${{ needs.set-time.outputs.TIME }}
+      NEW_TAG: ${{ needs.set-tag.outputs.NEW_TAG }}
+    steps:
+      - name: Send telegram message
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_MESSAGE_THREAD_ID: ${{ secrets.TELEGRAM_MESSAGE_THREAD_ID }}
+        run: |
+          curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+            -d "chat_id=$TELEGRAM_CHAT_ID" \
+            -d "text=💣 *NEW RELEASE* 💣
+            *AOSP Kernel*  
+            *Devices*: POCO X4 GT / Redmi Note 11T Pro (+) / K50i (xaga) 
+            *Updated*: $TIME (5.10.233)
+
+            • Download: [Here](https://github.com/bachnxuan/android_kernel_xiaomi_mt6895/releases/tag/${{ env.NEW_TAG }})
+
+            *Build Config*:
+            • Clang 12
+            • Thin LTO 
+            *Feature*:
+            • KernelSU-Next & SUSFS 1.5.5
+            *Notes*:  
+            • Only flash with AOSP roms
+            • Thanks XagaForce for kernel source
+            • _AnyKernel3 zips_ and _boot images_ included                                                                                                                                                                                              
+
+            Join: [bomb kernel chat 💣💣](https://t.me/+jArzTi4u-rhmODU1)
+            By: @reeevrd
+            #Kernel #V #AOSP #XAGA
