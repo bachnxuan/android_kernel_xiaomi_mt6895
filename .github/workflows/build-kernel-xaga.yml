@@ -105,10 +105,9 @@ jobs:
           mkdir bootimg && cd bootimg
           cp ../Image.gz ./Image.gz
           echo "Building boot.img"
-          $MKBOOTIMG --header_version 4 --kernel Image.gz --output boot-gz.img
+          $MKBOOTIMG --header_version 4 --kernel Image.gz --output boot.img
           $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-gz.img --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
-          cp ./boot-gz.img ../5.10.233-xaga-${{ env.TIME }}-boot.img
-          mv ./5.10.233-xaga-${{ env.TIME }}-boot.img ..
+          cp ./boot.img ../5.10.233-xaga-${{ env.TIME }}-boot.img
       - name: Upload Kernel Image Artifact
         uses: actions/upload-artifact@v4.6.0
         with:
