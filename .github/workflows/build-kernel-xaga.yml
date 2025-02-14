@@ -132,7 +132,7 @@ jobs:
       TIME: ${{ needs.set-time.outputs.TIME }}
       GH_TOKEN: ${{ github.token }}
     outputs:
-      NEW_TAG: ${{steps.set-tag.outputs.NEW_TAG}}
+      NEW_TAG: ${{ steps.set-tag.outputs.NEW_TAG }}
     steps:
       - name: Setup Environment
         id: set-tag
@@ -140,10 +140,12 @@ jobs:
           LATEST_TAG=$(gh api repos/bachnxuan/android_kernel_xiaomi_mt6895/tags --jq '.[0].name')
           if [ "$LATEST_TAG" == "$TIME" ]; then
             LATEST_TAG="$TIME-r0"
-            echo "NEW_TAG=$(echo "$LATEST_TAG" | awk -F'-r' '{suffix=$2; if (!suffix) suffix=0; suffix++; printf "%s-r%d", $1, suffix}')" >> $GITHUB_ENV && echo "NEW_TAG=$(echo "$LATEST_TAG" | awk -F'-r' '{suffix=$2; if (!suffix) suffix=0; suffix++; printf "%s-r%d", $1, suffix}')" >> $GITHUB_OUTPUT
-          else: 
-            echo "NEW_TAG = $TIME" >> $GITHUB_ENV && echo "NEW_TAG = $TIME" >> $GITHUB_OUTPUT
+            NEW_TAG=$(echo "$LATEST_TAG" | awk -F'-r' '{suffix=$2; if (!suffix) suffix=0; suffix++; printf "%s-r%d", $1, suffix}')
+          else
+            NEW_TAG="$TIME"
           fi
+          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
+          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_OUTPUT
           mkdir -p ./release-artifact
       - name: Print NEW_TAG
         run: |
