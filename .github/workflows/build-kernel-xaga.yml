@@ -136,8 +136,14 @@ jobs:
     steps:
       - name: Setup Environment
         id: set-tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          LATEST_TAG=$(gh api repos/bachnxuan/android_kernel_xiaomi_mt6895/tags --jq '.[0].name')
+          tags_json=$(curl --silent -H "Authorization: token ${GITHUB_TOKEN}" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/tags")
+          
+          LATEST_TAG=$(echo "$tags_json" | jq -r '.[0].name')
+          echo $LATEST_TAG
           if [ "$LATEST_TAG" == "$TIME" ]; then
             LATEST_TAG="$TIME-r0"
             NEW_TAG=$(echo "$LATEST_TAG" | awk -F'-r' '{suffix=$2; if (!suffix) suffix=0; suffix++; printf "%s-r%d", $1, suffix}')
