@@ -130,6 +130,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TIME: ${{ needs.set-time.outputs.TIME }}
+      GH_TOKEN: ${{ github.token }}
     outputs:
       NEW_TAG: ${{steps.set-tag.outputs.NEW_TAG}}
     steps:
