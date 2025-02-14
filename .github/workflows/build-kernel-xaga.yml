@@ -12,6 +12,17 @@ jobs:
         with:
           submodules: "true"
           fetch-depth: 1
+      - name: Maximize build space
+        if: ${{ inputs.runner == 'ubuntu-22.04' }}
+        uses: easimon/maximize-build-space@master
+        with:
+          root-reserve-mb: 8192
+          temp-reserve-mb: 2048
+          swap-size-mb: 8192
+          remove-dotnet: "true"
+          remove-android: "true"
+          remove-haskell: "true"
+          remove-codeql: "true"
       - name: Setup build environment
         run: |
           # Install require dependencies
@@ -28,19 +39,10 @@ jobs:
           git pull origin next-susfs
           # Get current time
           echo "TIME=$(date +'%Y%m%d')" >> $GITHUB_ENV
-      - name: Free disk space
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -qq curl
-          curl -fsSL https://raw.githubusercontent.com/kou/arrow/e49d8ae15583ceff03237571569099a6ad62be32/ci/scripts/util_free_space.sh | bash
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          max-size: 5G
-      - name: Set Swap Space
-        uses: pierotofy/set-swap-space@v1.0
-        with:
-          swap-size-gb: 10      
+          max-size: 5G 
       - name: Download toolchain
         working-directory: ./..
         run: |
@@ -85,6 +87,7 @@ jobs:
           sed -i 's/check_defconfig//' ./build.config.gki
       - name: Build
         run: |
+          ccache -s
           bash build.sh
       - name: Making ak3 zip
         run: |
@@ -130,9 +133,12 @@ jobs:
       - name: Download Kernel Image Artifact
         uses: actions/download-artifact@v4.1.8
         with:
-          name: |
-            AnyKernel3
-            boot
+          name: AnyKernel3
+          path: ./release-artifact
+      - name: Download Kernel Image Artifact
+        uses: actions/download-artifact@v4.1.8
+        with:
+          name: boot
           path: ./release-artifact
       - name: Create Release
         id: create_release
