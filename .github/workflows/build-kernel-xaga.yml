@@ -145,6 +145,9 @@ jobs:
             echo "NEW_TAG = $TIME" >> $GITHUB_ENV && echo "NEW_TAG = $TIME" >> $GITHUB_OUTPUT
           fi
           mkdir -p ./release-artifact
+      - name: Print NEW_TAG
+        run: |
+          echo $NEW_TAG
       - name: Download Kernel Image Artifact
         uses: actions/download-artifact@v4.1.8
         with:
