@@ -130,6 +130,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TIME: ${{ needs.set-time.outputs.TIME }}
+    outputs:
       NEW_TAG: ${{steps.set-tag.outputs.NEW_TAG}}
     steps:
       - name: Setup Environment
@@ -206,4 +207,4 @@ jobs:
 
             Join: [bomb kernel chat 💣💣](https://t.me/+jArzTi4u-rhmODU1)
             By: @reeevrd
-            #Kernel #V #AOSP #XAGA
+            #Kernel #V #AOSP #XAGA"
