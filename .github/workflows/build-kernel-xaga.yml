@@ -121,7 +121,7 @@ jobs:
           name: boot
           path: ./5.10.233-xaga-${{ env.TIME }}-boot.img
           
-release:
+  release:
     needs: build
     runs-on: ubuntu-latest
     steps:
