@@ -200,11 +200,11 @@ jobs:
           TELEGRAM_MESSAGE_THREAD_ID: ${{ secrets.TELEGRAM_MESSAGE_THREAD_ID }}
         run: |
           curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
-               -d "chat_id=$TELEGRAM_CHAT_ID" \
-               -d "parse_mode=MarkdownV2" \
-               -d "text=💣 *NEW RELEASE* 💣
+           -d "chat_id=$TELEGRAM_CHAT_ID" \
+           -d "parse_mode=MarkdownV2" \
+           -d "text=💣 *BOMB DROP* 💣
           *AOSP Kernel*  
-          *Devices*: POCO X4 GT / Redmi Note 11T Pro (+) / K50i (xaga)
+          *Devices*: POCO X4 GT / Redmi Note 11T Pro \(\+\) / K50i \(xaga\)
           *Updated*: $TIME (5.10.233)
           
           • Download: [Here](https://github.com/bachnxuan/android_kernel_xiaomi_mt6895/releases/tag/$NEW_TAG)
@@ -217,7 +217,7 @@ jobs:
           *Notes*:  
           • Only flash with AOSP roms
           • Thanks XagaForce for kernel source
-          • _AnyKernel3 zips_ and _boot images_ included
+          • \_AnyKernel3 zips\_ and \_boot images\_ included
           
           Join: [bomb kernel chat 💣💣](https://t.me/+jArzTi4u-rhmODU1)
           By: @reeevrd
