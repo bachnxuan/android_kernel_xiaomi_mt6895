@@ -204,7 +204,7 @@ jobs:
            -d "parse_mode=MarkdownV2" \
            -d "text=💣 *BOMB DROP* 💣
           *AOSP Kernel*  
-          *Devices*: POCO X4 GT / Redmi Note 11T Pro \(\+\) / K50i \(xaga\)
+          *Devices*: POCO X4 GT / Redmi Note 11T Pro (\+) / K50i (xaga)
           *Updated*: $TIME (5.10.233)
           
           • Download: [Here](https://github.com/bachnxuan/android_kernel_xiaomi_mt6895/releases/tag/$NEW_TAG)
@@ -213,11 +213,11 @@ jobs:
           • Clang 12
           • Thin LTO
           *Feature*:
-          • KernelSU\-Next & SUSFS 1.5.5
+          • KernelSU-Next & SUSFS 1.5.5
           *Notes*:  
           • Only flash with AOSP roms
           • Thanks XagaForce for kernel source
-          • \_AnyKernel3 zips\_ and \_boot images\_ included
+          • __AnyKernel3 zips__ and __boot images__ included
           
           Join: [bomb kernel chat 💣💣](https://t.me/+jArzTi4u-rhmODU1)
           By: @reeevrd
