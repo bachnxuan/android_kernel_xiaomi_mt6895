@@ -200,24 +200,15 @@ jobs:
           TELEGRAM_MESSAGE_THREAD_ID: ${{ secrets.TELEGRAM_MESSAGE_THREAD_ID }}
         run: |
           curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
-           -d "chat_id=$TELEGRAM_CHAT_ID" \
-           -d "parse_mode=MarkdownV2" \
-           -d "text=💣 *BOMB DROP* 💣
-          *AOSP Kernel*  
-          *Devices*: POCO X4 GT / Redmi Note 11T Pro (\+) / K50i (xaga)
-          *Updated*: $TIME (5.10.233)
-          
-          • Download: [Here](https://github.com/bachnxuan/android_kernel_xiaomi_mt6895/releases/tag/$NEW_TAG)
-          
-          *Build Config*:
-          • Clang 12
-          • Thin LTO
-          *Feature*:
-          • KernelSU-Next & SUSFS 1.5.5
-          *Notes*:  
-          • Only flash with AOSP roms
-          • Thanks XagaForce for kernel source
-          • __AnyKernel3 zips__ and __boot images__ included
+            -d "chat_id=$TELEGRAM_CHAT_ID" \
+            -d "message_thread_id=$TELEGRAM_MESSAGE_THREAD_ID" \
+            -d "text=💣 BOMB DROP 💣 ($TIME): 
+            https://github.com/bachnxuan/android_kernel_xiaomi_mt6895/releases/tag/${{ env.NEW_TAG }}
+            Kernel version: 5.10.233
+            KernelSU-Next + SUSFS 1.5.5 (Thin LTO + Clang 12)
+            Boot Images + AnyKernel3 Included
+            By: @reeevrd
+            #Kernel #V #AOSP #XAGA"
           
           Join: [bomb kernel chat 💣💣](https://t.me/+jArzTi4u-rhmODU1)
           By: @reeevrd
