@@ -393,52 +393,77 @@ bypass_orig_flow:
 	end = vma->vm_end;
 	show_vma_header_prefix(m, start, end, flags, pgoff, dev, ino);
 bypass:
-	/*
-	 * Print the dentry name for named mappings, and a
-	 * special [heap] marker for the heap:
-	 */
-	if (file) {
-		seq_pad(m, ' ');
-		seq_file_path(m, file, "\n");
-		goto done;
-	}
+    /*
+     * Print the dentry name for named mappings, and a
+     * special [heap] marker for the heap.
+     *
+     * Merged functionality: before printing, get the full file path,
+     * log it with pr_info(), and if it contains the target string,
+     * return immediately.
+     */
+    if (file) {
+        char *buf;
+        size_t size = seq_get_buf(m, &buf);
 
-	if (vma->vm_ops && vma->vm_ops->name) {
-		name = vma->vm_ops->name(vma);
-		if (name)
-			goto done;
-	}
+        if (size > 1) {
+            char *p = d_path(&file->f_path, buf, size);
+            if (!IS_ERR(p)) {
+                size_t len = size - (p - buf) - 1;
+                if (likely(p > buf))
+                    memmove(buf, p, len);
+                buf[len] = '\n';
 
-	name = arch_vma_name(vma);
-	if (!name) {
-		if (!mm) {
-			name = "[vdso]";
-			goto done;
-		}
+                pr_info("Bomb Kranel: %s\n", buf);
+                if (strstr("org.lineageos.platform-res.apk", buf)) {
+                    /* With susfs assistance this can spoof a non-custom ROM env */
+                    return;
+                }
 
-		if (vma->vm_start <= mm->brk &&
-		    vma->vm_end >= mm->start_brk) {
-			name = "[heap]";
-			goto done;
-		}
+                seq_commit(m, len + 1);
+                goto done;
+            }
+        }
+        /* Set the overflow status to get more memory if needed */
+        seq_commit(m, -1);
+        goto done;
+    }
 
-		if (is_stack(vma)) {
-			name = "[stack]";
-			goto done;
-		}
+    if (vma->vm_ops && vma->vm_ops->name) {
+        name = vma->vm_ops->name(vma);
+        if (name)
+            goto done;
+    }
 
-		if (vma_get_anon_name(vma)) {
-			seq_pad(m, ' ');
-			seq_print_vma_name(m, vma);
-		}
-	}
+    name = arch_vma_name(vma);
+    if (!name) {
+        if (!mm) {
+            name = "[vdso]";
+            goto done;
+        }
+
+        if (vma->vm_start <= mm->brk &&
+            vma->vm_end >= mm->start_brk) {
+            name = "[heap]";
+            goto done;
+        }
+
+        if (is_stack(vma)) {
+            name = "[stack]";
+            goto done;
+        }
+
+        if (vma_get_anon_name(vma)) {
+            seq_pad(m, ' ');
+            seq_print_vma_name(m, vma);
+        }
+    }
 
 done:
-	if (name) {
-		seq_pad(m, ' ');
-		seq_puts(m, name);
-	}
-	seq_putc(m, '\n');
+    if (name) {
+        seq_pad(m, ' ');
+        seq_puts(m, name);
+    }
+    seq_putc(m, '\n');
 }
 
 static int show_map(struct seq_file *m, void *v)
