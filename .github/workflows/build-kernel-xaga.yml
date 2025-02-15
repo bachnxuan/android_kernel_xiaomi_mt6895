@@ -8,7 +8,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     outputs:
-      TIME: ${{steps.set-time.outputs.TIME}}
+      TIME: ${{ steps.set-time.outputs.TIME }}
     steps:
       - name: Get current time
         id: set-time
@@ -129,7 +129,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     env:
-      TIME: ${{ needs.set-time.outputs.TIME }}
+      TIME: ${{ needs.build.outputs.TIME }}
       GH_TOKEN: ${{ github.token }}
     outputs:
       NEW_TAG: ${{ steps.set-tag.outputs.NEW_TAG }}
@@ -139,6 +139,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          echo $TIME
           tags_json=$(curl --silent -H "Authorization: token ${GITHUB_TOKEN}" \
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/tags")
           
@@ -189,7 +190,7 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     env:
-      TIME: ${{ needs.set-time.outputs.TIME }}
+      TIME: ${{ needs.build.outputs.TIME }}
       NEW_TAG: ${{ needs.set-tag.outputs.NEW_TAG }}
     steps:
       - name: Send telegram message
