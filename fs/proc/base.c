@@ -2271,14 +2271,6 @@ static int map_files_get_link(struct dentry *dentry, struct path *path)
 
 	rc = -ENOENT;
 	vma = find_exact_vma(mm, vm_start, vm_end);
-<<<<<<< HEAD
-	if (vma && vma->vm_file) {
-		*path = vma->vm_file->f_path;
-		path_get(path);
-		rc = 0;
-	}
-	mmap_read_unlock(mm);
-=======
  	if (vma) {
         	if (vma->vm_file) {
             		if (strstr(vma->vm_file->f_path.dentry->d_name.name, "lineage")) { 
@@ -2290,7 +2282,7 @@ static int map_files_get_link(struct dentry *dentry, struct path *path)
             		}
         	}
     	}
->>>>>>> 86ebb286c5c3 (/proc/pid/map_files: fake all lineage symlinks)
+	mmap_read_unlock(mm);
 
 out_mmput:
 	mmput(mm);
