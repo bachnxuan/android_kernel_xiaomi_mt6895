@@ -2,7 +2,6 @@ name: Build GKI - Release
 
 on:
   workflow_dispatch:
-  push:
 
 jobs:
   build:
@@ -202,10 +201,7 @@ jobs:
           curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
             -d "chat_id=$TELEGRAM_CHAT_ID" \
             -d "message_thread_id=$TELEGRAM_MESSAGE_THREAD_ID" \
-            -d "text=💣 BOMB DROP 💣 $TIME: \n
-            https://github.com/bachnxuan/android_kernel_xiaomi_mt6895/releases/tag/${{ env.NEW_TAG }} \n
-            Kernel version: 5.10.233 \n
-            KernelSU-Next -- SUSFS 1.5.5 -- Thin LTO -- Clang 12 \n
-            Boot Images -- AnyKernel3 Included
+            -d "text=💣 BOMB DROP 💣 $TIME:
+            https://github.com/bachnxuan/android_kernel_xiaomi_mt6895/releases/tag/${{ env.NEW_TAG }}
             By: @reeevrd
             #Kernel #V #AOSP #XAGA"
