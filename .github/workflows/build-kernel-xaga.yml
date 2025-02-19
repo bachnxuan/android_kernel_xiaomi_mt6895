@@ -138,20 +138,37 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo $TIME
+          set -euo pipefail
+          echo "TIME: $TIME"
+
+          # Fetch tags from the GitHub API
           tags_json=$(curl --silent -H "Authorization: token ${GITHUB_TOKEN}" \
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/tags")
           
-          LATEST_TAG=$(echo "$tags_json" | jq -r '.[0].name')
-          echo $LATEST_TAG
-          if [ "$LATEST_TAG" == "$TIME" ]; then
-            LATEST_TAG="$TIME-r0"
-            NEW_TAG=$(echo "$LATEST_TAG" | awk -F'-r' '{suffix=$2; if (!suffix) suffix=0; suffix++; printf "%s-r%d", $1, suffix}')
+          # Extract the latest tag (if exists)
+          LATEST_TAG=$(echo "$tags_json" | jq -r '.[0].name // empty')
+          echo "Latest Tag: $LATEST_TAG"
+          
+          # Determine NEW_TAG based on the latest tag and TIME value
+          if [[ -z "$LATEST_TAG" ]]; then
+            NEW_TAG="$TIME"
+          elif [[ "$LATEST_TAG" == "$TIME" ]]; then
+            NEW_TAG="${TIME}-r1"
+          elif [[ "$LATEST_TAG" == ${TIME}-r* ]]; then
+            revision=$(echo "$LATEST_TAG" | awk -F'-r' '{print $2}')
+            revision=${revision:-0}
+            new_revision=$((revision + 1))
+            NEW_TAG="${TIME}-r${new_revision}"
           else
             NEW_TAG="$TIME"
           fi
-          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
-          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_OUTPUT
+          
+          # Export NEW_TAG to GitHub environment and output for subsequent steps
+          echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
+          echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_OUTPUT
+          echo "New Tag: $NEW_TAG"
+          
+          # Ensure the release artifact directory exists
           mkdir -p ./release-artifact
       - name: Print NEW_TAG
         run: |
@@ -192,16 +209,18 @@ jobs:
       TIME: ${{ needs.build.outputs.TIME }}
       NEW_TAG: ${{ needs.release.outputs.NEW_TAG }}
     steps:
-      - name: Send telegram message
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          TELEGRAM_MESSAGE_THREAD_ID: ${{ secrets.TELEGRAM_MESSAGE_THREAD_ID }}
-        run: |
-          curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
-            -d "chat_id=$TELEGRAM_CHAT_ID" \
-            -d "message_thread_id=$TELEGRAM_MESSAGE_THREAD_ID" \
-            -d "text=💣 BOMB DROP 💣 $TIME:
-            https://github.com/bachnxuan/android_kernel_xiaomi_mt6895/releases/tag/${{ env.NEW_TAG }}
-            By: @reeevrd
-            #Kernel #V #AOSP #XAGA"
+      - name: Telegram Notify
+        uses: appleboy/telegram-action@0.0.3
+        with:
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          format: markdown
+          message: |
+            💣 *BOMB DROP* ${{ env.NEW_TAG }} 💣
+
+            *Feature:* KernelSU-Next + SUSFS 1.5.5 
+            *Changes:* 
+            ```${{ github.event.head_commit.message }}```
+            
+            Workflows: [Here](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            Download: [Here](https://github.com/${{ github.repository }}/releases/tag/${{ env.NEW_TAG }})
