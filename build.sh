@@ -21,7 +21,7 @@ export USE_CCACHE=1
 
 # Config
 THREAD="-j$(nproc --all)"
-DEFCONFIG="gki_defconfig"
+DEFCONFIG="bomb_defconfig"
 export ARCH=arm64
 export SUBARCH=$ARCH
 export KBUILD_BUILD_USER=bachnxuan
@@ -30,7 +30,7 @@ DATE_START=$(date +"%s")
 
 make $THREAD CC="ccache clang" CXX="ccache clang++" $LLVM_CONFIG $DEFCONFIG O=out
 make $THREAD CC="ccache clang" CXX="ccache clang++" $LLVM_CONFIG \
-    CONFIG_LOCALVERSION_AUTO=n LOCALVERSION=-android12-gki-xaga \
+    CONFIG_LOCALVERSION_AUTO=n LOCALVERSION=-android12-gki-bomb \
     LTO=thin O=out 2>&1 | tee kernel.log
 
 DATE_END=$(date +"%s")
